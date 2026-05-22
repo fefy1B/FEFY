@@ -2,31 +2,68 @@
 
 import { useState } from "react";
 import { ethers } from "ethers";
-import { getContract } from "../lib/contract";
+
+const CONTRACT_ADDRESS =
+  "0xF4DBF1a2c4108F2A6ab5aaF2eBF7be23EeC85578";
+
+const ABI = [
+  "function balanceOf(address owner) view returns (uint256)",
+  "function transfer(address to, uint amount) returns (bool)"
+];
 
 export default function Home() {
-
   const [wallet, setWallet] = useState("");
   const [balance, setBalance] = useState("");
-  const [connected, setConnected] = useState(false);
-
-  const [toAddress, setToAddress] = useState("");
+  const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
 
-  const [txHash, setTxHash] = useState("");
+  async function loadBalance(
+    contract: ethers.Contract,
+    address: string
+  ) {
+    const tokenBalance = await contract.balanceOf(address);
+
+    setBalance(
+      ethers.formatUnits(tokenBalance, 18)
+    );
+  }
 
   async function connectWallet() {
-
     try {
-
       if (!(window as any).ethereum) {
-        alert("Install Rabby Wallet");
+        alert("MetaMask/Rabby نصب نیست");
         return;
       }
 
-      await (window as any).ethereum.request({
-        method: "eth_requestAccounts",
-      });
+      const provider = new ethers.BrowserProvider(
+        (window as any).ethereum
+      );
+
+      const accounts = await provider.send(
+        "eth_requestAccounts",
+        []
+      );
+
+      const userAddress = accounts[0];
+
+      setWallet(userAddress);
+
+      const contract = new ethers.Contract(
+        CONTRACT_ADDRESS,
+        ABI,
+        provider
+      );
+
+      await loadBalance(contract, userAddress);
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function sendToken() {
+    try {
+      if (!(window as any).ethereum) return;
 
       const provider = new ethers.BrowserProvider(
         (window as any).ethereum
@@ -34,158 +71,69 @@ export default function Home() {
 
       const signer = await provider.getSigner();
 
-      const address = await signer.getAddress();
-
-      setWallet(address);
-
-      const contract = await getContract();
-
-      if (!contract) return;
-
-      const rawBalance =
-        await contract.balanceOf(address);
-
-      const decimals =
-        await contract.decimals();
-
-      const formatted =
-        ethers.formatUnits(
-          rawBalance,
-          decimals
-        );
-
-      setBalance(formatted);
-
-      setConnected(true);
-
-    } catch (err) {
-
-      console.log(err);
-
-    }
-  }
-
-  async function sendToken() {
-
-    try {
-
-      if (!toAddress || !amount) {
-        alert("Fill all fields");
-        return;
-      }
-
-      const contract = await getContract();
-
-      if (!contract) return;
-
-      const decimals =
-        await contract.decimals();
-
-      const parsedAmount =
-        ethers.parseUnits(
-          amount,
-          decimals
-        );
-
-      const tx = await contract.transfer(
-        toAddress,
-        parsedAmount
+      const contract = new ethers.Contract(
+        CONTRACT_ADDRESS,
+        ABI,
+        signer
       );
 
-      setTxHash(tx.hash);
+      const tx = await contract.transfer(
+        receiver,
+        ethers.parseUnits(amount, 18)
+      );
 
       await tx.wait();
 
-      alert("Transaction Success");
+      alert("Transfer Successful");
 
-      const rawBalance =
-        await contract.balanceOf(wallet);
+      // آپدیت لحظه‌ای بالانس
+      await loadBalance(contract, wallet);
 
-      const formatted =
-        ethers.formatUnits(
-          rawBalance,
-          decimals
-        );
+      // خالی شدن فیلدها
+      setReceiver("");
+      setAmount("");
 
-      setBalance(formatted);
-
-    } catch (err) {
-
-      console.log(err);
-
-      alert("Transaction Failed");
-
+    } catch (error) {
+      console.log(error);
+      alert("Transfer Failed");
     }
   }
 
   return (
+    <main className="flex min-h-screen items-center justify-center bg-green-600">
+      <div className="text-center text-white">
 
-    <main
-      className="
-        min-h-screen
-        flex
-        flex-col
-        items-center
-        justify-center
-        gap-6
-        bg-green-500
-        text-black
-        p-10
-      "
-    >
+        <h1 className="text-7xl font-bold mb-10">
+          FEFY TOKEN
+        </h1>
 
-      <h1 className="text-7xl font-bold">
-        FEFY TOKEN
-      </h1>
+        <button
+          onClick={connectWallet}
+          className="bg-black px-10 py-4 rounded-2xl text-3xl mb-8"
+        >
+          {wallet
+            ? wallet.slice(0, 6) +
+              "..." +
+              wallet.slice(-4)
+            : "Connect Wallet"}
+        </button>
 
-      <button
-        onClick={connectWallet}
-        className="
-          bg-blue-700
-          hover:bg-blue-800
-          text-white
-          px-10
-          py-5
-          rounded-3xl
-          text-3xl
-        "
-      >
-        {
-          connected
-            ? "Connected"
-            : "Connect Wallet"
-        }
-      </button>
+        <div className="text-5xl mb-10">
+          Balance:
+          <br />
+          {balance} FEFY
+        </div>
 
-      {wallet && (
-        <>
-
-          <p className="text-2xl break-all">
-            {wallet}
-          </p>
-
-          <p className="text-6xl font-bold">
-            {balance} FEFY
-          </p>
+        <div className="flex flex-col gap-4 items-center">
 
           <input
             type="text"
             placeholder="Receiver Address"
-            value={toAddress}
+            value={receiver}
             onChange={(e) =>
-              setToAddress(e.target.value)
+              setReceiver(e.target.value)
             }
-            className="
-              w-full
-              max-w-4xl
-              p-5
-              rounded-2xl
-              text-2xl
-              bg-white
-              border-4
-              border-black
-              outline-none
-            "
+            className="w-[500px] p-4 rounded-xl text-black text-2xl"
           />
 
           <input
@@ -195,66 +143,18 @@ export default function Home() {
             onChange={(e) =>
               setAmount(e.target.value)
             }
-            className="
-              w-full
-              max-w-4xl
-              p-5
-              rounded-2xl
-              text-2xl
-              bg-white
-              border-4
-              border-black
-              outline-none
-            "
+            className="w-[500px] p-4 rounded-xl text-black text-2xl"
           />
 
           <button
             onClick={sendToken}
-            className="
-              bg-green-900
-              hover:bg-green-950
-              text-white
-              px-16
-              py-6
-              rounded-3xl
-              text-4xl
-            "
+            className="bg-blue-700 px-10 py-4 rounded-2xl text-3xl"
           >
             Send FEFY
           </button>
 
-          {txHash && (
-
-            <div className="text-center">
-
-              <p className="text-2xl font-bold">
-                Transaction Hash
-              </p>
-
-              <p className="break-all">
-                {txHash}
-              </p>
-
-              <a
-                href={`https://sepolia.etherscan.io/tx/${txHash}`}
-                target="_blank"
-                className="
-                  text-blue-900
-                  underline
-                  text-2xl
-                "
-              >
-                View On Etherscan
-              </a>
-
-            </div>
-
-          )}
-
-        </>
-      )}
-
+        </div>
+      </div>
     </main>
-
   );
 }

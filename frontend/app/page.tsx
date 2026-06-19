@@ -460,7 +460,7 @@ export default function Home() {
               {loading ? "⏳ PROCESSING..." : buyCooldown ? "WAIT..." : "BUY FEFY"}
             </button>
             
-            {/* کادر Contract Address - دقیقاً زیر دکمه خرید */}
+            
             <div className="mt-6 bg-black/40 rounded-xl p-3 border border-green-500/20">
               <div className="flex flex-col md:flex-row items-center justify-between gap-3">
                 <div className="flex-1 w-full">
@@ -575,9 +575,14 @@ export default function Home() {
 >
   📄 Download Whitepaper
 </a>
-                  <button className="border border-green-500 hover:bg-green-500 hover:text-black px-10 py-5 rounded-2xl text-xl transition-all">
-                    Learn More
-                  </button>
+                  <a
+  href="https://t.me/fefy_token1b"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="border border-green-500 hover:bg-green-500 hover:text-black font-bold px-10 py-5 rounded-2xl text-xl transition-all hover:scale-105 active:scale-95 inline-block"
+>
+  🌍 Join Community
+</a>
                 </div>
               </div>
               <div className="flex-1 flex justify-center">

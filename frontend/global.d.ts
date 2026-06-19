@@ -1,3 +1,7 @@
-interface Window {
-  ethereum: any;
+export {};
+
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
 }

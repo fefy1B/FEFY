@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 
 export const CONTRACT_ADDRESS =
-  "0xA153361792754f3C868387b5ef3182db71952701";
+  "0xC26166825088453ce44537239cE90601b515F92f";
 
 export const ABI = [
   "function balanceOf(address owner) view returns (uint256)",
@@ -12,7 +12,7 @@ export const ABI = [
 export async function getContract() {
 
   if (!(window).ethereum) {
-    alert("Install Rabby Wallet");
+    alert("Install a Web3 Wallet");
     return null;
   }
 

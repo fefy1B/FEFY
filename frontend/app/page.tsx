@@ -569,7 +569,7 @@ export default function Home() {
   Explore the official FEFY Whitepaper and discover the vision behind the world's first Nature Intelligence Ecosystem for Web3. Learn about our philosophy, tokenomics, roadmap, governance, and long-term mission to build technology that learns from nature instead of exploiting it.
 </p>
 <a
-  href="/whitepaper/fefy_whitepaper_v1.0.pdf"
+  href="/whitepaper/FEFY-Whitepaper.pdf"
   download
   className="bg-green-500 hover:bg-green-400 text-black font-bold px-10 py-5 rounded-2xl text-xl transition-all hover:scale-105 active:scale-95 inline-block"
 >

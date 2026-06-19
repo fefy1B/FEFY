@@ -2,22 +2,26 @@ const hre = require("hardhat");
 
 async function main() {
 
-  const PRESALE =
+  const tokenAddress =
+    "0xC26166825088453ce44537239cE90601b515F92f";
+
+  const Presale =
     await hre.ethers.getContractFactory(
       "FEFYPresale"
     );
 
   const presale =
-    await PRESALE.deploy(
-      "0xF4DBF1a2c4108F2A6ab5aaF2eBF7be23EeC85578"
+    await Presale.deploy(
+      tokenAddress
     );
 
   await presale.waitForDeployment();
 
   console.log(
-    "PRESALE DEPLOYED TO:",
+    "PRESALE:",
     await presale.getAddress()
   );
+
 }
 
 main().catch((error) => {

@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
 interface IERC20 {
-
     function transfer(
         address to,
         uint256 amount
@@ -21,21 +20,29 @@ contract FEFYPresale is Ownable, Pausable {
 
     IERC20 public token;
 
-    uint256 public rate = 1000;
+    uint256 public rate = 600000;
 
     uint256 public totalSold;
+    uint256 public totalRaised;
+
+    uint256 public softCap = 100 ether;
+    uint256 public hardCap = 500 ether;
+
+    event TokensPurchased(
+        address buyer,
+        uint256 bnbAmount,
+        uint256 tokenAmount
+    );
 
     constructor(
         address tokenAddress
     )
         Ownable(msg.sender)
     {
-        token =
-            IERC20(tokenAddress);
+        token = IERC20(tokenAddress);
     }
 
     receive() external payable {
-
         buyTokens();
     }
 
@@ -44,19 +51,41 @@ contract FEFYPresale is Ownable, Pausable {
         payable
         whenNotPaused
     {
-
         require(
             msg.value > 0,
-            "Send ETH"
+            "Send BNB"
+        );
+
+        require(
+            totalRaised + msg.value <= hardCap,
+            "Hard cap reached"
         );
 
         uint256 tokenAmount =
             msg.value * rate;
 
+        require(
+            contractTokenBalance() >= tokenAmount,
+            "Not enough tokens"
+        );
+
+        totalRaised += msg.value;
         totalSold += tokenAmount;
 
-        token.transfer(
+        bool success =
+            token.transfer(
+                msg.sender,
+                tokenAmount
+            );
+
+        require(
+            success,
+            "Transfer failed"
+        );
+
+        emit TokensPurchased(
             msg.sender,
+            msg.value,
             tokenAmount
         );
     }
@@ -82,28 +111,28 @@ contract FEFYPresale is Ownable, Pausable {
     function changeRate(
         uint256 newRate
     )
-        public
+        external
         onlyOwner
     {
         rate = newRate;
     }
 
     function pauseSale()
-        public
+        external
         onlyOwner
     {
         _pause();
     }
 
     function resumeSale()
-        public
+        external
         onlyOwner
     {
         _unpause();
     }
 
     function withdrawETH()
-        public
+        external
         onlyOwner
     {
         payable(owner()).transfer(
